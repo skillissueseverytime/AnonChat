@@ -61,8 +61,7 @@
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Python 3.9+
-- pip
+ - This project requires Python 3.10. Python 3.13 is not supported due to TensorFlow and pydantic-core compatibility.
 
 ### Backend Setup
 
