@@ -47,6 +47,9 @@ export default function VerificationScreen({ onBack, onVerified, onError }: Veri
             cameraStream.getTracks().forEach(track => track.stop());
             setCameraStream(null);
         }
+        if (videoRef.current) {
+            videoRef.current.srcObject = null;
+        }
     };
 
     const capturePhoto = async () => {
@@ -95,6 +98,9 @@ export default function VerificationScreen({ onBack, onVerified, onError }: Veri
             // Stop camera immediately after successful verification
             stopCamera();
 
+            // Small delay to ensure camera is fully released before navigation
+            await new Promise(resolve => setTimeout(resolve, 100));
+
             onVerified(result.gender);
         } catch (e: any) {
             onError(e.message);
@@ -142,7 +148,7 @@ export default function VerificationScreen({ onBack, onVerified, onError }: Veri
                     </div>
                     {cameraError && (
                         <div className="camera-error">
-                            <span>📷</span>
+                            <span>📸</span>
                             <p>Camera access required</p>
                             <button className="btn-secondary" onClick={startCamera}>Enable Camera</button>
                         </div>

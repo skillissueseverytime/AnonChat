@@ -39,7 +39,7 @@ export default function QueueScreen({ filter, onCancel }: QueueScreenProps) {
                     <div className="pulse-ring"></div>
                     <div className="pulse-ring delay-1"></div>
                     <div className="pulse-ring delay-2"></div>
-                    <span className="queue-icon">🔍</span>
+                    <span className="queue-icon">🔮</span>
                 </div>
 
                 <h2>Finding your match...</h2>

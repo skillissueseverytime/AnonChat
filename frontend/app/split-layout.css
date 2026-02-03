@@ -1,0 +1,198 @@
+/* ========================================
+   Split Layout - Branding Left, Content Right
+   ======================================== */
+
+.app-container {
+    display: flex;
+    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Left Side - Simple Branding */
+.app-brand-side {
+    flex: 0 0 40%;
+    max-width: 550px;
+    min-width: 350px;
+    background:
+        radial-gradient(circle at 50% 50%, rgba(102, 126, 234, 0.12) 0%, transparent 60%),
+        #050508;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-2xl);
+    overflow: hidden;
+}
+
+.app-brand-side::before {
+    content: '';
+    position: absolute;
+    inset: -50%;
+    background: conic-gradient(from 0deg at 50% 50%, transparent 0deg, rgba(139, 92, 246, 0.02) 60deg, transparent 120deg);
+    animation: rotate 20s linear infinite;
+}
+
+.brand-content {
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.brand-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: var(--space-md);
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.2;
+}
+
+.brand-tagline {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+/* Right Side - All Content */
+.app-content-side {
+    flex: 1;
+    background: var(--bg-primary);
+    overflow-y: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-xl);
+}
+
+.content-wrapper {
+    width: 100%;
+    max-width: 750px;
+    min-height: 400px;
+}
+
+/* Welcome Screen */
+.welcome-content {
+    padding: var(--space-2xl);
+    text-align: center;
+    animation: fadeIn 0.4s ease;
+}
+
+.welcome-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: var(--space-lg);
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.welcome-text {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: var(--space-2xl);
+}
+
+.welcome-content .btn-primary {
+    margin-bottom: var(--space-lg);
+}
+
+.welcome-content .privacy-note {
+    margin-top: var(--space-xl);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Adjust child screens to fit in content area */
+.content-wrapper .verification-screen,
+.content-wrapper .profile-screen,
+.content-wrapper .dashboard-screen,
+.content-wrapper .queue-screen,
+.content-wrapper .chat-screen {
+    min-height: auto;
+    height: auto;
+    background: transparent;
+    padding: 0;
+    justify-content: flex-start;
+}
+
+.content-wrapper .verification-container,
+.content-wrapper .profile-container,
+.content-wrapper .dashboard-container,
+.content-wrapper .queue-container {
+    max-width: 100%;
+    padding: 0;
+}
+
+/* Chat screen adjustments */
+.content-wrapper .chat-screen {
+    height: 80vh;
+    max-height: 800px;
+}
+
+.content-wrapper .chat-container {
+    height: 100%;
+    box-shadow: none;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .app-container {
+        flex-direction: column;
+    }
+
+    .app-brand-side {
+        flex: 0 0 auto;
+        max-width: none;
+        min-height: 25vh;
+        padding: var(--space-xl) var(--space-lg);
+    }
+
+    .brand-title {
+        font-size: 2rem;
+    }
+
+    .brand-tagline {
+        font-size: 0.95rem;
+    }
+
+    .app-content-side {
+        flex: 1;
+        padding: var(--space-lg);
+    }
+
+    .content-wrapper .chat-screen {
+        height: 65vh;
+    }
+}
+
+@media (max-width: 640px) {
+    .app-brand-side {
+        min-height: 20vh;
+        padding: var(--space-lg) var(--space-md);
+    }
+
+    .brand-title {
+        font-size: 1.75rem;
+    }
+
+    .brand-tagline {
+        font-size: 0.9rem;
+    }
+
+    .welcome-title {
+        font-size: 2rem;
+    }
+
+    .welcome-text {
+        font-size: 1rem;
+    }
+
+    .app-content-side {
+        padding: var(--space-md);
+    }
+}

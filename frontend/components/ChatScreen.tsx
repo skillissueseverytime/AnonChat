@@ -58,7 +58,7 @@ export default function ChatScreen({ partner, messages, onSendMessage, onLeave, 
             <div className="chat-container">
                 <header className="chat-header">
                     <div className="partner-info">
-                        <div className="partner-avatar-placeholder">🎭</div>
+                        <span className="partner-avatar">✨</span>
                         <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <span className="partner-name">{partner.nickname}</span>
