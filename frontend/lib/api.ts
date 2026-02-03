@@ -4,22 +4,28 @@
  * API Module - Backend communication
  */
 
+import { getDeviceId } from './deviceFingerprint';
+
 const BASE_URL = 'http://localhost:8000';
 const WS_URL = 'ws://localhost:8000';
 
-let deviceId: string | null = null;
-
 export async function initAPI(id: string) {
-    deviceId = id;
+    // Deprecated: Device ID is now handled automatically via headers
 }
 
 export async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${BASE_URL}${endpoint}`;
-    const defaultOptions: RequestInit = {
-        headers: { 'Content-Type': 'application/json' }
+
+    // Get device ID from storage
+    const deviceId = getDeviceId();
+
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-Device-ID': deviceId,
+        ...(options.headers || {})
     };
 
-    const response = await fetch(url, { ...defaultOptions, ...options });
+    const response = await fetch(url, { ...options, headers });
 
     if (!response.ok) {
         const error = await response.json().catch(() => ({ detail: 'Request failed' }));
@@ -29,19 +35,24 @@ export async function request<T>(endpoint: string, options: RequestInit = {}): P
     return response.json();
 }
 
-export async function register(id: string) {
+export async function register() {
     return request('/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ device_id: id }),
+        body: JSON.stringify({}),
     });
 }
 
-export async function verifyGender(imageBlob: Blob, id: string) {
+export async function verifyGender(imageBlob: Blob) {
     const formData = new FormData();
     formData.append('image', imageBlob, 'selfie.jpg');
 
-    const response = await fetch(`${BASE_URL}/api/auth/verify-gender?device_id=${id}`, {
+    const deviceId = getDeviceId();
+
+    const response = await fetch(`${BASE_URL}/api/auth/verify-gender`, {
         method: 'POST',
+        headers: {
+            'X-Device-ID': deviceId
+        },
         body: formData,
     });
 
@@ -53,22 +64,21 @@ export async function verifyGender(imageBlob: Blob, id: string) {
     return response.json();
 }
 
-export async function updateProfile(id: string, nickname: string, bio: string) {
+export async function updateProfile(nickname: string, bio: string) {
     return request('/api/auth/profile', {
         method: 'PUT',
-        body: JSON.stringify({ device_id: id, nickname, bio }),
+        body: JSON.stringify({ nickname, bio }),
     });
 }
 
-export async function getMe(id: string) {
-    return request(`/api/auth/me?device_id=${id}`);
+export async function getMe() {
+    return request(`/api/auth/me`);
 }
 
-export async function submitReport(reporterId: string, reportedId: string, reason: string) {
+export async function submitReport(reportedId: string, reason: string) {
     return request('/api/reports/submit', {
         method: 'POST',
         body: JSON.stringify({
-            reporter_device_id: reporterId,
             reported_device_id: reportedId,
             reason: reason,
         }),

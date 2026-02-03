@@ -1,11 +1,11 @@
 """Authentication and user management routes."""
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Header
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 
 from app.database import get_db
-from app.models import UserSession
+from app.models import User
 from app.services.karma import (
     get_or_create_user,
     get_karma,
@@ -20,11 +20,10 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
 class RegisterRequest(BaseModel):
-    device_id: str = Field(..., min_length=32, max_length=64)
+    pass  # Device ID now comes from header
 
 
 class ProfileUpdateRequest(BaseModel):
-    device_id: str = Field(..., min_length=32, max_length=64)
     nickname: str = Field(..., min_length=1, max_length=50)
     bio: str = Field("", max_length=200)
 
@@ -41,16 +40,20 @@ class UserResponse(BaseModel):
 
 
 @router.post("/register", response_model=UserResponse)
-def register_device(request: RegisterRequest, db: Session = Depends(get_db)):
+def register_device(
+    request: RegisterRequest,
+    x_device_id: str = Header(..., min_length=32, max_length=64, alias="X-Device-ID"),
+    db: Session = Depends(get_db)
+):
     """
     Register a new device or return existing session.
     No PII required - only device fingerprint.
     """
-    user = get_or_create_user(db, request.device_id)
-    reset_daily_limits(db, request.device_id)
-    award_daily_login(db, request.device_id)
+    user = get_or_create_user(db, x_device_id)
+    reset_daily_limits(db, x_device_id)
+    award_daily_login(db, x_device_id)
     
-    access_level = check_access_level(db, request.device_id)
+    access_level = check_access_level(db, x_device_id)
     
     return UserResponse(
         device_id=user.device_id,
@@ -66,7 +69,7 @@ def register_device(request: RegisterRequest, db: Session = Depends(get_db)):
 
 @router.post("/verify-gender")
 async def verify_gender(
-    device_id: str,
+    x_device_id: str = Header(..., min_length=32, max_length=64, alias="X-Device-ID"),
     image: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
@@ -79,7 +82,7 @@ async def verify_gender(
     - Only gender result ("Man" or "Woman") is stored
     """
     # Check access level
-    access = check_access_level(db, device_id)
+    access = check_access_level(db, x_device_id)
     if access in ["permanent_ban", "temp_ban"]:
         raise HTTPException(
             status_code=403,
@@ -106,7 +109,7 @@ async def verify_gender(
         raise HTTPException(status_code=400, detail=error)
     
     # Update user record
-    user = get_or_create_user(db, device_id)
+    user = get_or_create_user(db, x_device_id)
     user.gender_result = gender
     user.last_verified_at = datetime.utcnow()
     db.commit()
@@ -119,10 +122,14 @@ async def verify_gender(
 
 
 @router.put("/profile", response_model=UserResponse)
-def update_profile(request: ProfileUpdateRequest, db: Session = Depends(get_db)):
+def update_profile(
+    request: ProfileUpdateRequest,
+    x_device_id: str = Header(..., min_length=32, max_length=64, alias="X-Device-ID"),
+    db: Session = Depends(get_db)
+):
     """Update user's nickname and bio."""
-    user = db.query(UserSession).filter(
-        UserSession.device_id == request.device_id
+    user = db.query(User).filter(
+        User.device_id == x_device_id
     ).first()
     
     if not user:
@@ -133,7 +140,7 @@ def update_profile(request: ProfileUpdateRequest, db: Session = Depends(get_db))
     db.commit()
     db.refresh(user)
     
-    access_level = check_access_level(db, request.device_id)
+    access_level = check_access_level(db, x_device_id)
     
     return UserResponse(
         device_id=user.device_id,
@@ -148,16 +155,19 @@ def update_profile(request: ProfileUpdateRequest, db: Session = Depends(get_db))
 
 
 @router.get("/me", response_model=UserResponse)
-def get_current_user(device_id: str, db: Session = Depends(get_db)):
+def get_current_user(
+    x_device_id: str = Header(..., min_length=32, max_length=64, alias="X-Device-ID"),
+    db: Session = Depends(get_db)
+):
     """Get current user info."""
-    user = db.query(UserSession).filter(
-        UserSession.device_id == device_id
+    user = db.query(User).filter(
+        User.device_id == x_device_id
     ).first()
     
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    access_level = check_access_level(db, device_id)
+    access_level = check_access_level(db, x_device_id)
     
     return UserResponse(
         device_id=user.device_id,

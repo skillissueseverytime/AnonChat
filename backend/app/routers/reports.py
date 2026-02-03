@@ -1,5 +1,5 @@
 """Report and karma management routes."""
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from pydantic import BaseModel, Field
 from typing import List
@@ -17,7 +17,6 @@ router = APIRouter(prefix="/api/reports", tags=["reports"])
 
 
 class ReportRequest(BaseModel):
-    reporter_device_id: str = Field(..., min_length=32, max_length=64)
     reported_device_id: str = Field(..., min_length=32, max_length=64)
     reason: str = Field(..., min_length=10, max_length=500)
 
@@ -35,20 +34,24 @@ class KarmaResponse(BaseModel):
 
 
 @router.post("/submit", response_model=ReportResponse)
-def submit_user_report(request: ReportRequest, db: Session = Depends(get_db)):
+def submit_user_report(
+    request: ReportRequest,
+    reporter_device_id: str = Header(..., min_length=32, max_length=64, alias="X-Device-ID"),
+    db: Session = Depends(get_db)
+):
     """
     Submit a report against another user.
     Initial karma penalty is applied to the reported user.
     """
     # Can't report yourself
-    if request.reporter_device_id == request.reported_device_id:
+    if reporter_device_id == request.reported_device_id:
         raise HTTPException(
             status_code=400,
             detail="Cannot report yourself"
         )
     
     # Check reporter's access level
-    access = check_access_level(db, request.reporter_device_id)
+    access = check_access_level(db, reporter_device_id)
     if access in ["permanent_ban", "temp_ban"]:
         raise HTTPException(
             status_code=403,
@@ -57,7 +60,7 @@ def submit_user_report(request: ReportRequest, db: Session = Depends(get_db)):
     
     report = submit_report(
         db,
-        request.reporter_device_id,
+        reporter_device_id,
         request.reported_device_id,
         request.reason
     )

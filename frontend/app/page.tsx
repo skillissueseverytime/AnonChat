@@ -60,7 +60,7 @@ export default function Home() {
       }
 
       try {
-        const user = await register(id) as any;
+        const user = await register() as any;
         setUserData(user);
 
         if (user.is_verified && user.nickname) {
@@ -136,7 +136,7 @@ export default function Home() {
 
     // Refresh user data
     try {
-      const user = await register(deviceId) as any;
+      const user = await register() as any;
       setUserData(user);
     } catch (e) {
       // Ignore
@@ -150,7 +150,7 @@ export default function Home() {
 
     // Refresh user data
     try {
-      const user = await register(deviceId) as any;
+      const user = await register() as any;
       setUserData({
         ...user,
         nickname,
@@ -225,7 +225,7 @@ export default function Home() {
 
   const handleSubmitReport = async (reason: string, details: string) => {
     try {
-      await submitReport(deviceId, partner?.device_id || 'unknown', `${reason}: ${details}`);
+      await submitReport(partner?.device_id || 'unknown', `${reason}: ${details}`);
       showToast('success', 'Report submitted. Thank you.');
       setIsReportModalOpen(false);
       handleLeaveChat();

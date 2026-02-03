@@ -10,7 +10,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db, SessionLocal
-from app.models import UserSession
+from app.models import User
 from app.services.matching import matching_service
 from app.services.karma import check_access_level, award_chat_completion
 from app.config import QUEUE_COOLDOWN_SECONDS, DAILY_SPECIFIC_FILTER_LIMIT
@@ -104,8 +104,8 @@ async def websocket_endpoint(websocket: WebSocket, device_id: str):
     
     try:
         # Verify user exists and has access
-        user = db.query(UserSession).filter(
-            UserSession.device_id == device_id
+        user = db.query(User).filter(
+            User.device_id == device_id
         ).first()
         
         if not user:
@@ -199,7 +199,7 @@ async def websocket_endpoint(websocket: WebSocket, device_id: str):
 async def handle_join_queue(
     device_id: str,
     data: dict,
-    user: UserSession,
+    user: User,
     db: Session
 ):
     """Handle queue join request."""
@@ -267,11 +267,11 @@ async def handle_join_queue(
 async def establish_match(device_id1: str, device_id2: str, db: Session):
     """Establish a chat match between two users."""
     # Get user info
-    user1 = db.query(UserSession).filter(
-        UserSession.device_id == device_id1
+    user1 = db.query(User).filter(
+        User.device_id == device_id1
     ).first()
-    user2 = db.query(UserSession).filter(
-        UserSession.device_id == device_id2
+    user2 = db.query(User).filter(
+        User.device_id == device_id2
     ).first()
     
     if not user1 or not user2:

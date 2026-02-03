@@ -12,15 +12,14 @@ class ReportStatus(enum.Enum):
     REJECTED = "rejected"
 
 
-class UserSession(Base):
+class User(Base):
     """
-    User session tied to device fingerprint.
+    User entity tied to device fingerprint.
     No personally identifiable information is stored.
     """
-    __tablename__ = "user_sessions"
+    __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    device_id = Column(String(64), unique=True, index=True, nullable=False)
+    device_id = Column(String(64), primary_key=True, index=True)
     gender_result = Column(String(10), nullable=True)  # "Man" or "Woman"
     nickname = Column(String(50), nullable=True)
     bio = Column(String(200), nullable=True)

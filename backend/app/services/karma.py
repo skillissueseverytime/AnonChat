@@ -3,7 +3,7 @@ from datetime import datetime, date
 from sqlalchemy.orm import Session
 from typing import Literal
 
-from app.models import UserSession, Report, ReportStatus
+from app.models import User, Report, ReportStatus
 from app.config import (
     KARMA_INITIAL,
     KARMA_CHAT_COMPLETE,
@@ -21,11 +21,11 @@ from app.config import (
 AccessLevel = Literal["full", "standard", "warning", "temp_ban", "permanent_ban"]
 
 
-def get_or_create_user(db: Session, device_id: str) -> UserSession:
+def get_or_create_user(db: Session, device_id: str) -> User:
     """Get existing user or create new one with initial karma."""
-    user = db.query(UserSession).filter(UserSession.device_id == device_id).first()
+    user = db.query(User).filter(User.device_id == device_id).first()
     if not user:
-        user = UserSession(
+        user = User(
             device_id=device_id,
             karma_score=KARMA_INITIAL,
             daily_matches_count=0,

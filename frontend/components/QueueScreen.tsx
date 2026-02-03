@@ -9,13 +9,26 @@ interface QueueScreenProps {
 
 export default function QueueScreen({ filter, onCancel }: QueueScreenProps) {
     const [elapsedTime, setElapsedTime] = useState(0);
+    const [currentTip, setCurrentTip] = useState(0);
+
+    const tips = [
+        "Be kind. Real people here.",
+        "Anonymous doesn't mean unaccountable.",
+        "Say 'Hello' to start things off right.",
+        "Respect boundaries.",
+        "Reporting bad behavior helps everyone."
+    ];
 
     useEffect(() => {
-        const timer = setInterval(() => {
-            setElapsedTime(prev => prev + 1);
-        }, 1000);
+        const timer = setInterval(() => setElapsedTime(prev => prev + 1), 1000);
+        const tipInterval = setInterval(() => {
+            setCurrentTip(prev => (prev + 1) % tips.length);
+        }, 4000);
 
-        return () => clearInterval(timer);
+        return () => {
+            clearInterval(timer);
+            clearInterval(tipInterval);
+        };
     }, []);
 
     const formatTime = (seconds: number) => {
@@ -24,36 +37,56 @@ export default function QueueScreen({ filter, onCancel }: QueueScreenProps) {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    const getFilterLabel = () => {
-        switch (filter) {
-            case 'female': return 'women';
-            case 'male': return 'men';
-            default: return 'anyone';
-        }
-    };
-
     return (
         <section className="queue-screen">
             <div className="queue-container">
-                <div className="queue-animation">
-                    <div className="pulse-ring"></div>
-                    <div className="pulse-ring delay-1"></div>
-                    <div className="pulse-ring delay-2"></div>
-                    <span className="queue-icon">🔮</span>
+
+                <div className="pulse-container">
+                    <div className="pulse-circle"></div>
+                    <div className="pulse-circle"></div>
+                    <div className="pulse-circle"></div>
+                    <span
+                        style={{
+                            fontSize: '2.5rem',
+                            zIndex: 10,
+                            position: 'relative'
+                        }}
+                    >
+                        ✨
+                    </span>
                 </div>
 
-                <h2>Finding your match...</h2>
-                <p className="queue-subtitle">Looking for <span>{getFilterLabel()}</span></p>
+                <h2 style={{ marginBottom: '0.5rem' }}>
+                    Finding someone to talk to...
+                </h2>
 
-                <div className="queue-stats">
-                    <div className="stat">
-                        <span className="stat-value">{formatTime(elapsedTime)}</span>
-                        <span className="stat-label">Time in queue</span>
+                <p className="queue-subtitle" style={{ opacity: 0.7 }}>
+                    This usually takes a few seconds.
+                </p>
+
+                <div className="queue-stats" style={{ margin: '2rem 0' }}>
+                    <div
+                        className="stat-value"
+                        style={{ fontSize: '1.2rem', fontWeight: 'bold' }}
+                    >
+                        {formatTime(elapsedTime)}
                     </div>
                 </div>
 
+                <div
+                    style={{
+                        minHeight: '60px',
+                        marginBottom: '2rem',
+                        color: 'var(--accent-primary)',
+                        fontStyle: 'italic',
+                        transition: 'opacity 0.5s ease',
+                    }}
+                >
+                    "{tips[currentTip]}"
+                </div>
+
                 <button className="btn-secondary" onClick={onCancel}>
-                    Cancel
+                    Cancel Search
                 </button>
             </div>
         </section>
