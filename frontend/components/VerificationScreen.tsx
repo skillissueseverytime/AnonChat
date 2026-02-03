@@ -91,6 +91,10 @@ export default function VerificationScreen({ onBack, onVerified, onError }: Veri
             }
 
             const result = await response.json();
+
+            // Stop camera immediately after successful verification
+            stopCamera();
+
             onVerified(result.gender);
         } catch (e: any) {
             onError(e.message);
