@@ -48,7 +48,7 @@ export default function ChatScreen({ partner, messages, onSendMessage, onLeave, 
             <div className="chat-container">
                 <header className="chat-header">
                     <div className="partner-info">
-                        <span className="partner-avatar">🎭</span>
+                        <span className="partner-avatar">✨</span>
                         <div>
                             <span className="partner-name">{partner.nickname}</span>
                             <span className="partner-status">Connected</span>

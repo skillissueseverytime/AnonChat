@@ -30,11 +30,11 @@ export default function DashboardScreen({ userData, onFindMatch, isLoading }: Da
             <div className="dashboard-container">
                 <header className="dashboard-header">
                     <div className="user-info">
-                        <span className="user-avatar">🎭</span>
+                        <span className="user-avatar">✨</span>
                         <div>
                             <span className="user-name">{userData.nickname || 'Anonymous'}</span>
                             <div className="karma-badge">
-                                <span className="karma-icon">⭐</span>
+                                <span className="karma-icon">💫</span>
                                 <span>{userData.karma_score}</span> Karma
                             </div>
                         </div>
@@ -56,27 +56,27 @@ export default function DashboardScreen({ userData, onFindMatch, isLoading }: Da
                             className={`filter-btn ${selectedFilter === 'any' ? 'active' : ''}`}
                             onClick={() => handleFilterClick('any')}
                         >
-                            <span className="filter-icon">🌈</span>
+                            <span className="filter-icon">🌟</span>
                             <span>Anyone</span>
                         </button>
                         <button
                             className={`filter-btn ${selectedFilter === 'female' ? 'active' : ''}`}
                             onClick={() => handleFilterClick('female')}
                         >
-                            <span className="filter-icon">👩</span>
+                            <span className="filter-icon">🌸</span>
                             <span>Women</span>
                         </button>
                         <button
                             className={`filter-btn ${selectedFilter === 'male' ? 'active' : ''}`}
                             onClick={() => handleFilterClick('male')}
                         >
-                            <span className="filter-icon">👨</span>
+                            <span className="filter-icon">🔷</span>
                             <span>Men</span>
                         </button>
                     </div>
 
                     <div className="daily-limit">
-                        <span className="limit-icon">🎫</span>
+                        <span className="limit-icon">🎁</span>
                         <span>Specific filters: <strong>{userData.daily_matches_remaining}</strong>/5 remaining today</span>
                     </div>
 
@@ -90,7 +90,7 @@ export default function DashboardScreen({ userData, onFindMatch, isLoading }: Da
                 </div>
 
                 <div className="tips-section">
-                    <h4>💡 Tips for great conversations</h4>
+                    <h4>⚡ Tips for great conversations</h4>
                     <ul>
                         <li>Be respectful and kind</li>
                         <li>Keep conversations appropriate</li>

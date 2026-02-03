@@ -36,9 +36,9 @@ function Toast({ toast, onRemove }: { toast: ToastMessage; onRemove: (id: string
     }, [toast.id, onRemove]);
 
     const icons = {
-        success: '✓',
-        error: '✕',
-        warning: '⚠'
+        success: '✅',
+        error: '❌',
+        warning: '⚠️'
     };
 
     return (
