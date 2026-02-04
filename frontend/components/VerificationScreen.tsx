@@ -3,13 +3,12 @@
 import { useEffect, useRef, useState } from 'react';
 
 interface VerificationScreenProps {
-    deviceId: string;
     onBack: () => void;
     onVerified: (gender: string) => void;
     onError: (message: string) => void;
 }
 
-export default function VerificationScreen({ deviceId, onBack, onVerified, onError }: VerificationScreenProps) {
+export default function VerificationScreen({ onBack, onVerified, onError }: VerificationScreenProps) {
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
@@ -78,19 +77,34 @@ export default function VerificationScreen({ deviceId, onBack, onVerified, onErr
 
             if (!blob) throw new Error('Failed to capture image');
 
-            if (!blob) throw new Error('Failed to capture image');
+            // Get device ID from localStorage
+            const deviceId = localStorage.getItem('controlled_anonymity_device_id') || '';
 
             const formData = new FormData();
             formData.append('image', blob, 'selfie.jpg');
 
-            const response = await fetch(`http://localhost:8000/api/auth/verify-gender?device_id=${deviceId}`, {
+            const response = await fetch(`https://anonchat-backend-xmqk.onrender.com/api/auth/verify-gender`, {
                 method: 'POST',
+                headers: {
+                    'X-Device-ID': deviceId,
+                },
                 body: formData,
             });
 
             if (!response.ok) {
-                const error = await response.json().catch(() => ({ detail: 'Verification failed' }));
-                throw new Error(error.detail || 'Verification failed');
+                const errorData = await response.json().catch(() => ({ detail: 'Verification failed' }));
+                let errorMessage = 'Verification failed';
+
+                if (typeof errorData.detail === 'string') {
+                    errorMessage = errorData.detail;
+                } else if (Array.isArray(errorData.detail)) {
+                    // Handle FastAPI validation error array
+                    errorMessage = errorData.detail.map((err: any) => err.msg).join(', ');
+                } else if (typeof errorData.detail === 'object') {
+                    errorMessage = JSON.stringify(errorData.detail);
+                }
+
+                throw new Error(errorMessage);
             }
 
             const result = await response.json();
@@ -112,19 +126,35 @@ export default function VerificationScreen({ deviceId, onBack, onVerified, onErr
     return (
         <section className="verification-screen">
             <div className="verification-container">
-                <button className="btn-back" onClick={onBack}>
+                <button className="btn-back" onClick={onBack} disabled title="Verification required to continue">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M19 12H5M12 19l-7-7 7-7" />
                     </svg>
                 </button>
 
-                <h2>Verify Your Identity</h2>
+                <h2>
+                    <span style={{ marginRight: '10px' }}>🔒</span>
+                    Quick Safety Check
+                </h2>
                 <p className="verification-subtitle">
                     Quick selfie verification to keep our community safe.
-                    <strong> Your photo is deleted immediately after verification.</strong>
+                    <br />
+                    <span style={{ color: 'var(--success)', marginTop: '8px', display: 'inline-block' }}>
+                        No uploads allowed. Your photo is deleted immediately.
+                    </span>
+                    <br />
+                    <span style={{ color: 'var(--text-secondary)', marginTop: '8px', display: 'inline-block', fontSize: '0.9rem' }}>
+                        We only verify gender. No face data is stored.
+                    </span>
                 </p>
 
-                <div className="camera-container">
+                <div className="camera-container" style={{
+                    maxHeight: 'none',
+                    aspectRatio: '9/16',
+                    height: '60vh',
+                    borderRadius: '24px',
+                    borderColor: 'var(--bg-tertiary)'
+                }}>
                     <video ref={videoRef} className="camera-preview" autoPlay playsInline></video>
                     <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
                     <div className="camera-overlay">
@@ -149,7 +179,7 @@ export default function VerificationScreen({ deviceId, onBack, onVerified, onErr
                 ) : (
                     <div className="verification-status">
                         <div className="status-spinner"></div>
-                        <p>Analyzing...</p>
+                        <p>Checking… Image will be deleted in a moment.</p>
                     </div>
                 )}
             </div>

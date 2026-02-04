@@ -3,17 +3,14 @@
 import { useState } from 'react';
 
 interface ProfileScreenProps {
-    deviceId: string;
     verifiedGender: string;
-    initialNickname?: string;
-    initialBio?: string;
     onProfileComplete: (nickname: string, bio: string) => void;
     onError: (message: string) => void;
 }
 
-export default function ProfileScreen({ deviceId, verifiedGender, initialNickname = '', initialBio = '', onProfileComplete, onError }: ProfileScreenProps) {
-    const [nickname, setNickname] = useState(initialNickname);
-    const [bio, setBio] = useState(initialBio);
+export default function ProfileScreen({ verifiedGender, onProfileComplete, onError }: ProfileScreenProps) {
+    const [nickname, setNickname] = useState('');
+    const [bio, setBio] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -27,21 +24,33 @@ export default function ProfileScreen({ deviceId, verifiedGender, initialNicknam
         setIsSubmitting(true);
 
         try {
+            const deviceId = localStorage.getItem('controlled_anonymity_device_id') || '';
 
-
-            const response = await fetch('http://localhost:8000/api/auth/profile', {
+            const response = await fetch('https://anonchat-backend-xmqk.onrender.com/api/auth/profile', {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Device-ID': deviceId,
+                },
                 body: JSON.stringify({
-                    device_id: deviceId,
                     nickname: nickname.trim(),
                     bio: bio.trim()
                 }),
             });
 
             if (!response.ok) {
-                const error = await response.json().catch(() => ({ detail: 'Profile update failed' }));
-                throw new Error(error.detail || 'Profile update failed');
+                const errorData = await response.json().catch(() => ({ detail: 'Profile update failed' }));
+                let errorMessage = 'Profile update failed';
+
+                if (typeof errorData.detail === 'string') {
+                    errorMessage = errorData.detail;
+                } else if (Array.isArray(errorData.detail)) {
+                    errorMessage = errorData.detail.map((err: any) => err.msg).join(', ');
+                } else if (typeof errorData.detail === 'object') {
+                    errorMessage = JSON.stringify(errorData.detail);
+                }
+
+                throw new Error(errorMessage);
             }
 
             onProfileComplete(nickname.trim(), bio.trim());
