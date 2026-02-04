@@ -26,7 +26,7 @@ export default function ProfileScreen({ verifiedGender, onProfileComplete, onErr
         try {
             const deviceId = localStorage.getItem('controlled_anonymity_device_id') || '';
 
-            const response = await fetch('https://anonchat-backend-xmqk.onrender.com/api/auth/profile', {
+          const response = await fetch('http://localhost:8000/api/auth/profile', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -112,3 +112,4 @@ export default function ProfileScreen({ verifiedGender, onProfileComplete, onErr
         </section>
     );
 }
+
