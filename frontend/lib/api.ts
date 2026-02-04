@@ -4,44 +4,61 @@
  * API Module - Backend communication
  */
 
-const BASE_URL = 'http://localhost:8000';
-const WS_URL = 'ws://localhost:8000';
+import { getDeviceId } from './deviceFingerprint';
 
-let deviceId: string | null = null;
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+// Auto-derive WS URL if not set, replacing http -> ws, https -> wss
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || BASE_URL.replace(/^http/, 'ws');
 
 export async function initAPI(id: string) {
-    deviceId = id;
+    // Deprecated: Device ID is now handled automatically via headers
 }
 
 export async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${BASE_URL}${endpoint}`;
-    const defaultOptions: RequestInit = {
-        headers: { 'Content-Type': 'application/json' }
+
+    // Get device ID from storage
+    const deviceId = getDeviceId();
+
+    const headers = {
+        'Content-Type': 'application/json',
+        'X-Device-ID': deviceId,
+        ...(options.headers || {})
     };
 
-    const response = await fetch(url, { ...defaultOptions, ...options });
+    const response = await fetch(url, { ...options, headers });
 
     if (!response.ok) {
         const error = await response.json().catch(() => ({ detail: 'Request failed' }));
-        throw new Error(error.detail || 'Request failed');
+        const errorMessage = typeof error.detail === 'string'
+            ? error.detail
+            : Array.isArray(error.detail) && error.detail.length > 0 && error.detail[0].msg
+                ? error.detail[0].msg
+                : JSON.stringify(error.detail);
+        throw new Error(errorMessage || 'Request failed');
     }
 
     return response.json();
 }
 
-export async function register(id: string) {
+export async function register() {
     return request('/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ device_id: id }),
+        body: JSON.stringify({}),
     });
 }
 
-export async function verifyGender(imageBlob: Blob, id: string) {
+export async function verifyGender(imageBlob: Blob) {
     const formData = new FormData();
     formData.append('image', imageBlob, 'selfie.jpg');
 
-    const response = await fetch(`${BASE_URL}/api/auth/verify-gender?device_id=${id}`, {
+    const deviceId = getDeviceId();
+
+    const response = await fetch(`${BASE_URL}/api/auth/verify-gender`, {
         method: 'POST',
+        headers: {
+            'X-Device-ID': deviceId
+        },
         body: formData,
     });
 
@@ -53,22 +70,21 @@ export async function verifyGender(imageBlob: Blob, id: string) {
     return response.json();
 }
 
-export async function updateProfile(id: string, nickname: string, bio: string) {
+export async function updateProfile(nickname: string, bio: string) {
     return request('/api/auth/profile', {
         method: 'PUT',
-        body: JSON.stringify({ device_id: id, nickname, bio }),
+        body: JSON.stringify({ nickname, bio }),
     });
 }
 
-export async function getMe(id: string) {
-    return request(`/api/auth/me?device_id=${id}`);
+export async function getMe() {
+    return request(`/api/auth/me`);
 }
 
-export async function submitReport(reporterId: string, reportedId: string, reason: string) {
+export async function submitReport(reportedId: string, reason: string) {
     return request('/api/reports/submit', {
         method: 'POST',
         body: JSON.stringify({
-            reporter_device_id: reporterId,
             reported_device_id: reportedId,
             reason: reason,
         }),
@@ -93,6 +109,7 @@ export class WebSocketManager {
 
         return new Promise((resolve, reject) => {
             const url = `${WS_URL}/ws/chat/${this.deviceId}`;
+            console.log('🔌 [WS-Client] Attempting connection to:', url);
             this.socket = new WebSocket(url);
 
             this.socket.onopen = () => {
