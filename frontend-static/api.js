@@ -1,4 +1,3 @@
-
 /**
  * API Module - Backend communication
  */
@@ -14,8 +13,17 @@ const API = {
 
     async request(endpoint, options = {}) {
         const url = `${this.BASE_URL}${endpoint}`;
-        const defaultOptions = { headers: { 'Content-Type': 'application/json' } };
+        
+        // Mandatory headers for the backend
+        const defaultOptions = { 
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Device-ID': this.deviceId
+            } 
+        };
+        
         const response = await fetch(url, { ...defaultOptions, ...options });
+        
         if (!response.ok) {
             const error = await response.json().catch(() => ({ detail: 'Request failed' }));
             throw new Error(error.detail || 'Request failed');
@@ -26,20 +34,23 @@ const API = {
     async register() {
         return this.request('/api/auth/register', {
             method: 'POST',
-            body: JSON.stringify({ device_id: this.deviceId }),
+            body: JSON.stringify({}), // Body device_id is optional, header is primary
         });
     },
 
     async verifyGender(imageBlob) {
         const formData = new FormData();
         formData.append('image', imageBlob, 'selfie.jpg');
-        const url = `${this.BASE_URL}/api/auth/verify-gender?device_id=${this.deviceId}`;
+        
+        const url = `${this.BASE_URL}/api/auth/verify-gender`;
         const response = await fetch(url, {
             method: 'POST',
+            headers: {
+                'X-Device-ID': this.deviceId
+            },
             body: formData,
-            mode: 'cors',
-            credentials: 'include'
         });
+
         if (!response.ok) {
             const error = await response.json().catch(() => ({ detail: 'Verification failed' }));
             throw new Error(error.detail || 'Verification failed');
@@ -50,19 +61,18 @@ const API = {
     async updateProfile(nickname, bio) {
         return this.request('/api/auth/profile', {
             method: 'PUT',
-            body: JSON.stringify({ device_id: this.deviceId, nickname, bio }),
+            body: JSON.stringify({ nickname, bio }),
         });
     },
 
     async getMe() {
-        return this.request(`/api/auth/me?device_id=${this.deviceId}`);
+        return this.request(`/api/auth/me`);
     },
 
     async submitReport(reportedDeviceId, reason, details) {
         return this.request('/api/reports/submit', {
             method: 'POST',
             body: JSON.stringify({
-                reporter_device_id: this.deviceId,
                 reported_device_id: reportedDeviceId,
                 reason: `${reason}: ${details}`,
             }),
@@ -70,11 +80,11 @@ const API = {
     },
 
     async completeChat() {
-        return this.request(`/api/reports/chat-complete?device_id=${this.deviceId}`, { method: 'POST' });
+        return this.request(`/api/reports/chat-complete`, { method: 'POST' });
     },
 
     async getKarma() {
-        return this.request(`/api/reports/karma?device_id=${this.deviceId}`);
+        return this.request(`/api/reports/karma`);
     },
 };
 
@@ -90,6 +100,7 @@ const WebSocketManager = {
         if (this.socket?.readyState === WebSocket.OPEN) return Promise.resolve();
         return new Promise((resolve, reject) => {
             const url = `${API.WS_URL}/ws/chat/${API.deviceId}`;
+            console.log('🔌 [WS-Static] Connecting to:', url);
             this.socket = new WebSocket(url);
             this.socket.onopen = () => { this.reconnectAttempts = 0; resolve(); };
             this.socket.onclose = (e) => {
