@@ -6,9 +6,8 @@
 
 import { getDeviceId } from './deviceFingerprint';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
-// Auto-derive WS URL if not set, replacing http -> ws, https -> wss
-const WS_URL = process.env.NEXT_PUBLIC_WS_URL || BASE_URL.replace(/^http/, 'ws');
+const BASE_URL = 'https://anonchat-backend-xmqk.onrender.com';
+const WS_URL = 'wss://anonchat-backend-xmqk.onrender.com';
 
 export async function initAPI(id: string) {
     // Deprecated: Device ID is now handled automatically via headers
