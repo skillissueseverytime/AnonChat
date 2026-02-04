@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { verifyGender } from '@/lib/api';
 
 interface VerificationScreenProps {
     onBack: () => void;
@@ -77,37 +78,7 @@ export default function VerificationScreen({ onBack, onVerified, onError }: Veri
 
             if (!blob) throw new Error('Failed to capture image');
 
-            // Get device ID from localStorage
-            const deviceId = localStorage.getItem('controlled_anonymity_device_id') || '';
-
-            const formData = new FormData();
-            formData.append('image', blob, 'selfie.jpg');
-
-           const response = await fetch(`http://localhost:8000/api/auth/verify-gender`, {
-                method: 'POST',
-                headers: {
-                    'X-Device-ID': deviceId,
-                },
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ detail: 'Verification failed' }));
-                let errorMessage = 'Verification failed';
-
-                if (typeof errorData.detail === 'string') {
-                    errorMessage = errorData.detail;
-                } else if (Array.isArray(errorData.detail)) {
-                    // Handle FastAPI validation error array
-                    errorMessage = errorData.detail.map((err: any) => err.msg).join(', ');
-                } else if (typeof errorData.detail === 'object') {
-                    errorMessage = JSON.stringify(errorData.detail);
-                }
-
-                throw new Error(errorMessage);
-            }
-
-            const result = await response.json();
+            const result = await verifyGender(blob);
 
             // Stop camera immediately after successful verification
             stopCamera();

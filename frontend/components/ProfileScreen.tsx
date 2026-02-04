@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { updateProfile } from '@/lib/api';
 
 interface ProfileScreenProps {
     verifiedGender: string;
@@ -24,35 +25,7 @@ export default function ProfileScreen({ verifiedGender, onProfileComplete, onErr
         setIsSubmitting(true);
 
         try {
-            const deviceId = localStorage.getItem('controlled_anonymity_device_id') || '';
-
-          const response = await fetch('http://localhost:8000/api/auth/profile', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Device-ID': deviceId,
-                },
-                body: JSON.stringify({
-                    nickname: nickname.trim(),
-                    bio: bio.trim()
-                }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ detail: 'Profile update failed' }));
-                let errorMessage = 'Profile update failed';
-
-                if (typeof errorData.detail === 'string') {
-                    errorMessage = errorData.detail;
-                } else if (Array.isArray(errorData.detail)) {
-                    errorMessage = errorData.detail.map((err: any) => err.msg).join(', ');
-                } else if (typeof errorData.detail === 'object') {
-                    errorMessage = JSON.stringify(errorData.detail);
-                }
-
-                throw new Error(errorMessage);
-            }
-
+            await updateProfile(nickname.trim(), bio.trim());
             onProfileComplete(nickname.trim(), bio.trim());
         } catch (e: any) {
             onError(e.message);
