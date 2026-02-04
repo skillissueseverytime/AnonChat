@@ -83,25 +83,30 @@ uvicorn app.main:app --reload --port 8000
 
 ### Frontend Setup
 
-Simply open `frontend/index.html` in a modern browser, or serve it:
+This project uses **Next.js**. To run the dashboard:
 
 ```bash
-# Using Python's built-in server
+# Navigate to frontend
 cd frontend
-python -m http.server 3000
+
+# Install dependencies
+npm install
+
+# Run the development server
+npm run dev
 ```
 
-Then open http://localhost:3000
+Then open [http://localhost:3000](http://localhost:3000)
 
 ## 🔧 API Endpoints
 
 ### Authentication
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/auth/register` | Register device |
-| POST | `/api/auth/verify-gender` | Verify gender with image |
+| POST | `/api/auth/register` | Register device (Hashed Device ID) |
+| POST | `/api/auth/verify-gender` | Verify gender (DeepFace Local) |
 | PUT | `/api/auth/profile` | Update nickname/bio |
-| GET | `/api/auth/me` | Get current user |
+| GET | `/api/auth/me` | Get current user info |
 
 ### Reports & Karma
 | Method | Endpoint | Description |
@@ -120,11 +125,11 @@ Then open http://localhost:3000
 | Event | Karma Change |
 |-------|--------------|
 | Initial Registration | +100 |
-| Complete chat without reports | +2 |
+| Complete chat session | +2 |
 | Get reported | -15 |
 | Report verified (abuse confirmed) | -30 |
 | Submit false report | -10 |
-| Daily login | +1 |
+
 
 ### Access Levels
 - **100+**: Full access, priority matching
@@ -139,30 +144,26 @@ Then open http://localhost:3000
 controlled-anonymity/
 ├── backend/
 │   ├── app/
-│   │   ├── __init__.py
-│   │   ├── main.py           # FastAPI app entry
-│   │   ├── config.py         # Configuration
-│   │   ├── database.py       # SQLAlchemy setup
-│   │   ├── models.py         # Database models
-│   │   ├── routers/
-│   │   │   ├── auth.py       # Auth endpoints
-│   │   │   ├── reports.py    # Karma/reports endpoints
-│   │   │   └── ws_chat.py    # WebSocket chat
-│   │   └── services/
-│   │       ├── karma.py      # Karma logic
-│   │       ├── matching.py   # Queue matching
-│   │       └── verification.py # AI gender verification
-│   └── requirements.txt
+│   │   ├── main.py           # FastAPI entry point
+│   │   ├── routers/          # API Route handlers (Auth, Reports, Chat)
+│   │   ├── services/         # Core logic (Matching, Karma, AI)
+│   │   └── models.py         # Database models
+│   └── requirements.txt      # Python dependencies
 ├── frontend/
-│   ├── index.html            # Main HTML
-│   ├── styles.css            # Styles
-│   ├── device-fingerprint.js # Device ID
-│   ├── api.js                # API client
-│   └── app.js                # Main app logic
+│   ├── app/                  # Next.js App Router (Pages)
+│   ├── components/           # UI Components (Chat, Verification Screens)
+│   ├── lib/                  # Frontend utilities (API, FingerPrinting)
+│   └── package.json          # Node.js build config/dependencies
 └── README.md
 ```
 
 ## 🔒 Privacy & Security
+
+### AI Gender Verification
+- Uses **DeepFace** (Local Integration).
+- **No external AI services used** (Port 5000 is NOT required).
+- Images are processed in-memory and deleted immediately.
+.
 
 ### Image Handling
 1. User captures selfie via browser Camera API
