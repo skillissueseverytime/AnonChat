@@ -4,7 +4,7 @@
  * API Module - Backend communication
  */
 
-import { getDeviceId } from './deviceFingerprint';
+import { getDeviceId, getDeviceIdHash } from './deviceFingerprint';
 
 const BASE_URL = 'http://localhost:8000';
 const WS_URL = 'ws://localhost:8000';
@@ -16,13 +16,13 @@ export async function initAPI(id: string) {
 export async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${BASE_URL}${endpoint}`;
 
-    // Get device ID from storage
-    const deviceId = getDeviceId();
+    // Get device ID from storage (use hashed version for backend compatibility)
+    const deviceId = await getDeviceIdHash();
 
-    const headers = {
+    const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         'X-Device-ID': deviceId,
-        ...(options.headers || {})
+        ...(options.headers as Record<string, string> || {})
     };
 
     const response = await fetch(url, { ...options, headers });
@@ -40,10 +40,13 @@ export async function request<T>(endpoint: string, options: RequestInit = {}): P
     return response.json();
 }
 
-export async function register() {
+export async function register(explicitId?: string) {
+    const deviceId = explicitId || await getDeviceIdHash();
     return request('/api/auth/register', {
         method: 'POST',
-        body: JSON.stringify({}),
+        body: JSON.stringify({
+            device_id: deviceId
+        }),
     });
 }
 
@@ -51,9 +54,11 @@ export async function verifyGender(imageBlob: Blob) {
     const formData = new FormData();
     formData.append('image', imageBlob, 'selfie.jpg');
 
-    const deviceId = getDeviceId();
+    const deviceId = await getDeviceIdHash();
+    const url = new URL(`${BASE_URL}/api/auth/verify-gender`);
+    url.searchParams.append('device_id', deviceId);
 
-    const response = await fetch(`${BASE_URL}/api/auth/verify-gender`, {
+    const response = await fetch(url.toString(), {
         method: 'POST',
         headers: {
             'X-Device-ID': deviceId
@@ -70,20 +75,27 @@ export async function verifyGender(imageBlob: Blob) {
 }
 
 export async function updateProfile(nickname: string, bio: string) {
+    const deviceId = await getDeviceIdHash();
     return request('/api/auth/profile', {
         method: 'PUT',
-        body: JSON.stringify({ nickname, bio }),
+        body: JSON.stringify({
+            device_id: deviceId,
+            nickname,
+            bio
+        }),
     });
 }
 
 export async function getMe() {
-    return request(`/api/auth/me`);
+    const deviceId = await getDeviceIdHash();
+    return request(`/api/auth/me?device_id=${encodeURIComponent(deviceId)}`);
 }
 
-export async function submitReport(reportedId: string, reason: string) {
+export async function submitReport(reporterId: string, reportedId: string, reason: string) {
     return request('/api/reports/submit', {
         method: 'POST',
         body: JSON.stringify({
+            reporter_device_id: reporterId,
             reported_device_id: reportedId,
             reason: reason,
         }),
